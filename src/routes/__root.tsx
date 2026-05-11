@@ -72,14 +72,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "GymPros" },
+      { name: "description", content: "gym para mis amighos" },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "GymPros" },
+      { property: "og:description", content: "gym para mis amighos" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "GymPros" },
+      { name: "twitter:description", content: "gym para mis amighos" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0399fb54-aa6b-45a9-b67f-261f28b67e0a/id-preview-d1af10d2--20a7d761-9e76-42c3-8c5f-785688a6d478.lovable.app-1778497145511.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0399fb54-aa6b-45a9-b67f-261f28b67e0a/id-preview-d1af10d2--20a7d761-9e76-42c3-8c5f-785688a6d478.lovable.app-1778497145511.png" },
     ],
     links: [
       {
