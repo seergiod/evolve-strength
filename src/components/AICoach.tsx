@@ -99,9 +99,16 @@ export function AICoach() {
     }
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        toast.error("Sesion caducada. Vuelve a iniciar sesion.");
+        return;
+      }
+
       const res = await fetch("/api/ai-coach", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           messages: newMessages.slice(-10), // last 10 messages for context
           userContext: {
@@ -136,12 +143,12 @@ export function AICoach() {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border/40">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-[0_0_16px_-4px_oklch(0.85_0.2_175_/_0.5)]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-sm">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
           <div>
             <h2 className="font-display font-bold text-sm">Coach IA</h2>
-            <p className="text-xs text-accent">Powered by Gemini</p>
+            <p className="text-xs text-accent">Powered by OpenRouter</p>
           </div>
         </div>
         {messages.length > 0 && (

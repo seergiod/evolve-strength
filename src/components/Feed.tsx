@@ -1,9 +1,26 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
-import { Activity, Clock } from "lucide-react";
+import { Activity, Clock, Dumbbell } from "lucide-react";
 
-type Exercise = Tables<"exercises">;
+type FeedItem = {
+  id: string;
+  username: string;
+  muscle_group: string;
+  exercise_name: string;
+  weight: number;
+  reps: number;
+  created_at: string;
+};
+
+type WorkoutSetRow = {
+  id: string;
+  muscle_group: string;
+  exercise_name: string;
+  weight: number;
+  reps: number;
+  created_at: string;
+  profiles: { username: string } | null;
+};
 
 function timeAgo(date: string) {
   const diff = Date.now() - new Date(date).getTime();
@@ -16,26 +33,35 @@ function timeAgo(date: string) {
 }
 
 export function Feed() {
-  const [items, setItems] = useState<Exercise[]>([]);
+  const [items, setItems] = useState<FeedItem[]>([]);
 
   const load = async () => {
     const { data } = await supabase
-      .from("exercises")
-      .select("*")
+      .from("workout_sets")
+      .select("id, muscle_group, exercise_name, weight, reps, created_at, profiles(username)")
       .order("created_at", { ascending: false })
       .limit(50);
-    if (data) setItems(data);
+
+    if (data) {
+      setItems(
+        (data as WorkoutSetRow[]).map((row) => ({
+          id: row.id,
+          username: row.profiles?.username ?? "usuario",
+          muscle_group: row.muscle_group,
+          exercise_name: row.exercise_name,
+          weight: Number(row.weight),
+          reps: row.reps,
+          created_at: row.created_at,
+        })),
+      );
+    }
   };
 
   useEffect(() => {
     load();
     const ch = supabase
       .channel("feed")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "exercises" },
-        (payload) => setItems((prev) => [payload.new as Exercise, ...prev].slice(0, 50)),
-      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "workout_sets" }, load)
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
@@ -43,44 +69,48 @@ export function Feed() {
   }, []);
 
   return (
-    <div className="card-elevated rounded-2xl p-5 md:p-6">
-      <div className="flex items-center gap-2 mb-5">
-        <Activity className="h-5 w-5 text-accent" />
-        <h2 className="font-display text-lg font-bold">Feed de Actividad</h2>
-        <span className="ml-auto text-xs text-muted-foreground">{items.length}</span>
+    <div className="card-elevated premium-card rounded-3xl p-5 md:p-6">
+      <div className="relative mb-5 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-accent/25 bg-accent/10">
+          <Activity className="h-5 w-5 text-accent" />
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Comunidad</p>
+          <h2 className="font-display text-lg font-bold">Feed de actividad</h2>
+        </div>
+        <span className="ml-auto rounded-full border border-border/60 bg-background/50 px-2 py-1 text-xs text-muted-foreground">
+          {items.length}
+        </span>
       </div>
 
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          No hay actividad todavía. Registra el primer ejercicio.
+        <p className="relative py-8 text-center text-sm text-muted-foreground">
+          No hay actividad todavia. Registra el primer ejercicio.
         </p>
       ) : (
         <>
-          {/* Mobile cards */}
-          <ul className="space-y-2 md:hidden">
-            {items.map((it) => (
+          <ul className="space-y-3 md:hidden">
+            {items.map((it, index) => (
               <li
                 key={it.id}
-                className="rounded-xl border border-border/40 bg-background/40 p-3"
+                className="stagger-in rounded-3xl border border-border/50 bg-background/45 p-4 shadow-[0_18px_40px_-28px_oklch(0_0_0_/_0.9)] transition-transform active:scale-[0.99]"
+                style={{ animationDelay: `${Math.min(index, 8) * 55}ms` }}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">{it.username}</p>
-                    <p className="text-sm text-foreground/90 truncate">
-                      {it.exercise_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {it.muscle_group}
-                    </p>
+                  <div className="flex min-w-0 gap-3">
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                      <Dumbbell className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">@{it.username}</p>
+                      <p className="truncate text-sm text-foreground/90">{it.exercise_name}</p>
+                      <p className="text-xs text-muted-foreground">{it.muscle_group}</p>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-accent font-bold">
-                      {Number(it.weight)}kg
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      x{it.reps} reps
-                    </p>
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end mt-1">
+                  <div className="shrink-0 text-right">
+                    <p className="font-display text-xl font-bold text-accent">{Number(it.weight)}kg</p>
+                    <p className="text-xs text-muted-foreground">x{it.reps} reps</p>
+                    <p className="mt-1 flex items-center justify-end gap-1 text-[10px] text-muted-foreground">
                       <Clock className="h-3 w-3" />
                       {timeAgo(it.created_at)}
                     </p>
@@ -90,33 +120,29 @@ export function Feed() {
             ))}
           </ul>
 
-          {/* Desktop table */}
-          <div className="hidden md:block overflow-hidden rounded-xl border border-border/40">
+          <div className="hidden overflow-hidden rounded-2xl border border-border/40 md:block">
             <table className="w-full text-sm">
               <thead className="bg-background/50 text-xs uppercase text-muted-foreground">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium">Usuario</th>
-                  <th className="text-left px-4 py-3 font-medium">Ejercicio</th>
-                  <th className="text-left px-4 py-3 font-medium">Grupo</th>
-                  <th className="text-right px-4 py-3 font-medium">Peso</th>
-                  <th className="text-right px-4 py-3 font-medium">Reps</th>
-                  <th className="text-right px-4 py-3 font-medium">Hace</th>
+                  <th className="px-4 py-3 text-left font-medium">Usuario</th>
+                  <th className="px-4 py-3 text-left font-medium">Ejercicio</th>
+                  <th className="px-4 py-3 text-left font-medium">Grupo</th>
+                  <th className="px-4 py-3 text-right font-medium">Peso</th>
+                  <th className="px-4 py-3 text-right font-medium">Reps</th>
+                  <th className="px-4 py-3 text-right font-medium">Hace</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((it) => (
+                {items.map((it, index) => (
                   <tr
                     key={it.id}
-                    className="border-t border-border/30 hover:bg-background/40 transition-colors"
+                    className="stagger-in border-t border-border/30 transition-colors hover:bg-background/40"
+                    style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
                   >
-                    <td className="px-4 py-3 font-semibold">{it.username}</td>
+                    <td className="px-4 py-3 font-semibold">@{it.username}</td>
                     <td className="px-4 py-3">{it.exercise_name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {it.muscle_group}
-                    </td>
-                    <td className="px-4 py-3 text-right text-accent font-semibold">
-                      {Number(it.weight)} kg
-                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{it.muscle_group}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-accent">{Number(it.weight)} kg</td>
                     <td className="px-4 py-3 text-right">{it.reps}</td>
                     <td className="px-4 py-3 text-right text-xs text-muted-foreground">
                       {new Date(it.created_at).toLocaleTimeString([], {

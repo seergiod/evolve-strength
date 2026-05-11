@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 
-export const Route = createFileRoute("/")({ component: AuthPage });`n`nfunction AuthPage() {
+export const Route = createFileRoute("/")({ component: AuthPage });
+
+function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,29 +50,23 @@ export const Route = createFileRoute("/")({ component: AuthPage });`n`nfunction 
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center px-4 overflow-hidden">
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/20 blur-[160px]" />
-        <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-accent/15 blur-[160px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-primary/10 blur-[120px]" />
-      </div>
-
+    <main className="relative flex min-h-screen items-center justify-center px-4 py-10 overflow-hidden">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent shadow-[0_0_30px_-4px_oklch(0.68_0.21_250_/_0.6)]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-sm">
             <Dumbbell className="h-7 w-7 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight font-display">IronFeed</h1>
-            <p className="text-xs text-muted-foreground tracking-widest uppercase">AI Fitness Platform</p>
+            <h1 className="text-3xl font-bold tracking-tight font-display">GYMBROS</h1>
+            <p className="text-xs text-muted-foreground tracking-widest uppercase">Training Social App</p>
           </div>
         </div>
 
-        <div className="card-elevated rounded-2xl p-8">
-          <div className="flex rounded-xl bg-muted/40 p-1 mb-6">
+        <div className="card-elevated rounded-xl p-8">
+          <div className="flex rounded-lg bg-muted p-1 mb-6">
             <button
               className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
-                mode === "signin" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                mode === "signin" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setMode("signin")}
             >
@@ -78,7 +74,7 @@ export const Route = createFileRoute("/")({ component: AuthPage });`n`nfunction 
             </button>
             <button
               className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
-                mode === "signup" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                mode === "signup" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setMode("signup")}
             >
@@ -144,7 +140,7 @@ export const Route = createFileRoute("/")({ component: AuthPage });`n`nfunction 
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 shadow-[0_0_30px_-4px_oklch(0.68_0.21_250_/_0.5)] mt-2"
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 shadow-sm mt-2"
             >
               {loading ? "Cargando..." : mode === "signin" ? "Entrar" : "Crear cuenta"}
               {!loading && <ArrowRight className="ml-2 h-5 w-5" />}

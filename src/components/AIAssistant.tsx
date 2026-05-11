@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const GOALS = [
   "Ganar fuerza",
@@ -82,9 +83,16 @@ export function AIAssistant() {
     setLoading(true);
     setRoutine("");
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        toast.error("Sesion caducada. Vuelve a iniciar sesion.");
+        return;
+      }
+
       const res = await fetch("/api/ai-routine", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ goal, level, days: Number(days) }),
       });
       if (!res.ok) {

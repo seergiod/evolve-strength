@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiAiRoutineRouteImport } from './routes/api/ai-routine'
+import { Route as ApiAiCoachRouteImport } from './routes/api/ai-coach'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -28,34 +29,43 @@ const ApiAiRoutineRoute = ApiAiRoutineRouteImport.update({
   path: '/api/ai-routine',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAiCoachRoute = ApiAiCoachRouteImport.update({
+  id: '/api/ai-coach',
+  path: '/api/ai-coach',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/api/ai-coach': typeof ApiAiCoachRoute
   '/api/ai-routine': typeof ApiAiRoutineRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/api/ai-coach': typeof ApiAiCoachRoute
   '/api/ai-routine': typeof ApiAiRoutineRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/api/ai-coach': typeof ApiAiCoachRoute
   '/api/ai-routine': typeof ApiAiRoutineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/api/ai-routine'
+  fullPaths: '/' | '/dashboard' | '/api/ai-coach' | '/api/ai-routine'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/api/ai-routine'
-  id: '__root__' | '/' | '/dashboard' | '/api/ai-routine'
+  to: '/' | '/dashboard' | '/api/ai-coach' | '/api/ai-routine'
+  id: '__root__' | '/' | '/dashboard' | '/api/ai-coach' | '/api/ai-routine'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  ApiAiCoachRoute: typeof ApiAiCoachRoute
   ApiAiRoutineRoute: typeof ApiAiRoutineRoute
 }
 
@@ -82,14 +92,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAiRoutineRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ai-coach': {
+      id: '/api/ai-coach'
+      path: '/api/ai-coach'
+      fullPath: '/api/ai-coach'
+      preLoaderRoute: typeof ApiAiCoachRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  ApiAiCoachRoute: ApiAiCoachRoute,
   ApiAiRoutineRoute: ApiAiRoutineRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

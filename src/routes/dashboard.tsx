@@ -25,7 +25,7 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
   head: () => ({
     meta: [
-      { title: "Dashboard — IronFeed" },
+      { title: "Dashboard — GYMBROS" },
       { name: "description", content: "Tu plataforma fitness AI-powered." },
     ],
   }),
@@ -75,16 +75,16 @@ function Dashboard() {
       <Toaster theme="dark" position="top-center" />
 
       {/* Header */}
-      <header className="border-b border-border/40 backdrop-blur-md bg-background/40 sticky top-0 z-30">
+      <header className="sticky top-0 z-30 border-b border-border/40 bg-background/70 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-[0_0_20px_-4px_oklch(0.68_0.21_250_/_0.5)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent glow-primary">
               <Dumbbell className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-display font-bold leading-none">IronFeed</h1>
+              <h1 className="font-display font-bold leading-none">GYMBROS</h1>
               <p className="text-[9px] uppercase tracking-widest text-muted-foreground hidden sm:block">
-                AI Fitness Platform
+                Training Social App
               </p>
             </div>
           </div>
@@ -97,7 +97,7 @@ function Dashboard() {
                 onClick={() => setTab(t.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   tab === t.id
-                    ? "bg-primary/20 text-primary border border-primary/30"
+                    ? "bg-primary text-primary-foreground glow-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-background/60"
                 }`}
               >
@@ -156,27 +156,27 @@ function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
         {/* Home Tab */}
         {tab === "home" && (
-          <div className="space-y-5">
-            <div>
+          <div className="screen-enter space-y-5">
+            <div className="stagger-in">
               <h2 className="font-display text-2xl md:text-3xl font-bold mb-1">
-                Hola, <span className="text-gradient">{profile?.display_name || profile?.username}</span> 💪
+                Hola, <span className="text-gradient">{profile?.display_name || profile?.username}</span>
               </h2>
               <p className="text-sm text-muted-foreground">Registra tu próximo entrenamiento y sube en el ranking.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               <div className="lg:col-span-2 space-y-5">
-                {profile && <ExerciseForm username={profile.username} userId={user.id} />}
+                {profile && <ExerciseForm userId={user.id} />}
                 <Feed />
               </div>
               <div className="space-y-5">
                 <Ranking />
-                <div className="card-elevated rounded-2xl p-4 text-center">
-                  <Trophy className="h-8 w-8 text-amber-400 mx-auto mb-2" />
+                <div className="card-elevated premium-card shimmer-line rounded-3xl p-4 text-center">
+                  <Trophy className="float-soft h-8 w-8 text-amber-400 mx-auto mb-2" />
                   <p className="text-sm font-semibold">Leaderboard Global</p>
                   <p className="text-xs text-muted-foreground mt-1">Compite con tu comunidad</p>
-                  <button onClick={() => setTab("profile")} className="mt-3 text-xs text-primary hover:underline">
-                    Ver mi perfil →
+                  <button onClick={() => setTab("profile")} className="tap-bounce mt-3 rounded-full border border-primary/25 px-3 py-2 text-xs text-primary">
+                    Ver mi perfil
                   </button>
                 </div>
               </div>
@@ -186,7 +186,7 @@ function Dashboard() {
 
         {/* Calendar Tab */}
         {tab === "calendar" && (
-          <div className="space-y-5">
+          <div className="screen-enter space-y-5">
             <div>
               <h2 className="font-display text-2xl font-bold mb-1">Calendario</h2>
               <p className="text-sm text-muted-foreground">Tu historial de entrenamientos</p>
@@ -199,7 +199,7 @@ function Dashboard() {
 
         {/* Profile Tab */}
         {tab === "profile" && (
-          <div className="space-y-5 max-w-2xl">
+          <div className="screen-enter space-y-5 max-w-2xl">
             <div>
               <h2 className="font-display text-2xl font-bold mb-1">Mi Perfil</h2>
               <p className="text-sm text-muted-foreground">Estadísticas y progreso personal</p>
@@ -210,7 +210,7 @@ function Dashboard() {
 
         {/* AI Coach Tab */}
         {tab === "coach" && (
-          <div className="space-y-5 max-w-2xl">
+          <div className="screen-enter space-y-5 max-w-2xl">
             <div>
               <h2 className="font-display text-2xl font-bold mb-1">Coach IA</h2>
               <p className="text-sm text-muted-foreground">Tu entrenador personal inteligente</p>
@@ -221,14 +221,14 @@ function Dashboard() {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t border-border/40 z-30">
-        <div className="flex">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-border/40 bg-background/85 backdrop-blur-xl md:hidden">
+        <div className="flex px-2 pb-2 pt-1">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex-1 flex flex-col items-center py-3 gap-1 text-[10px] transition-colors ${
-                tab === t.id ? "text-primary" : "text-muted-foreground"
+              className={`tap-bounce flex-1 flex flex-col items-center rounded-2xl py-3 gap-1 text-[10px] transition-all ${
+                tab === t.id ? "nav-pop bg-primary/15 text-primary glow-primary" : "text-muted-foreground"
               }`}
             >
               <t.icon className="h-5 w-5" />

@@ -1,8 +1,9 @@
--- IronFeed Full Platform Migration
+-- GYMBROS Full Platform Migration
 -- Run this after connecting Supabase Auth
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Profiles table linked to auth.users
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
   display_name TEXT,
@@ -28,7 +29,7 @@ CREATE POLICY "Users can update their own profile"
   ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Workouts table
-CREATE TABLE public.workouts (
+CREATE TABLE IF NOT EXISTS public.workouts (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   title TEXT NOT NULL DEFAULT 'Workout',
@@ -50,7 +51,7 @@ CREATE POLICY "Users can manage their own workouts"
   ON public.workouts FOR ALL USING (auth.uid() = user_id);
 
 -- Workout sets table (replaces old exercises table for logged sets)
-CREATE TABLE public.workout_sets (
+CREATE TABLE IF NOT EXISTS public.workout_sets (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   workout_id UUID NOT NULL REFERENCES public.workouts(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -74,7 +75,7 @@ CREATE POLICY "Users can manage their own sets"
   ON public.workout_sets FOR ALL USING (auth.uid() = user_id);
 
 -- Personal records table
-CREATE TABLE public.personal_records (
+CREATE TABLE IF NOT EXISTS public.personal_records (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   exercise_name TEXT NOT NULL,
@@ -94,7 +95,7 @@ CREATE POLICY "Users can manage their own PRs"
   ON public.personal_records FOR ALL USING (auth.uid() = user_id);
 
 -- AI chat history
-CREATE TABLE public.ai_chats (
+CREATE TABLE IF NOT EXISTS public.ai_chats (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
@@ -108,7 +109,7 @@ CREATE POLICY "Users can manage their own AI chats"
   ON public.ai_chats FOR ALL USING (auth.uid() = user_id);
 
 -- Social follows
-CREATE TABLE public.follows (
+CREATE TABLE IF NOT EXISTS public.follows (
   follower_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   following_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -136,17 +137,36 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.workouts;
 -- Function to auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  base_username TEXT;
+  final_username TEXT;
 BEGIN
+  base_username := COALESCE(
+    NULLIF(regexp_replace(new.raw_user_meta_data->>'username', '[^a-zA-Z0-9_]', '', 'g'), ''),
+    NULLIF(regexp_replace(split_part(new.email, '@', 1), '[^a-zA-Z0-9_]', '', 'g'), ''),
+    'user'
+  );
+
+  final_username := lower(base_username);
+
+  IF EXISTS (SELECT 1 FROM public.profiles WHERE username = final_username) THEN
+    final_username := final_username || '_' || substr(new.id::text, 1, 8);
+  END IF;
+
   INSERT INTO public.profiles (id, username, display_name)
   VALUES (
     new.id,
-    COALESCE(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
-    COALESCE(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1))
-  );
+    final_username,
+    COALESCE(NULLIF(new.raw_user_meta_data->>'display_name', ''), final_username)
+  )
+  ON CONFLICT (id) DO NOTHING;
+
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();

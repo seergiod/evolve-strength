@@ -1,4 +1,4 @@
-const KEY = "ironfeed_username";
+const KEY = "gymbros_username";
 
 export function getUsername(): string | null {
   if (typeof window === "undefined") return null;

@@ -80,7 +80,7 @@ export function TrainingCalendar() {
   });
 
   const firstDayOfWeek = startOfMonth(currentMonth).getDay();
-  const weekDays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const weekDays = ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"];
 
   const getWorkoutForDay = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
@@ -88,10 +88,10 @@ export function TrainingCalendar() {
   };
 
   return (
-    <div className="card-elevated rounded-2xl p-5 md:p-6">
+    <div className="card-elevated premium-card rounded-3xl p-5 md:p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/30 to-accent/30 border border-primary/20">
+          <div className="float-soft flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/30 to-accent/30 border border-primary/20">
             <CalIcon className="h-4 w-4 text-accent" />
           </div>
           <div>
@@ -99,7 +99,7 @@ export function TrainingCalendar() {
             {streak > 0 && (
               <div className="flex items-center gap-1 text-xs text-amber-400">
                 <Flame className="h-3 w-3" />
-                <span>{streak} días seguidos</span>
+                <span>{streak} dias seguidos</span>
               </div>
             )}
           </div>
@@ -108,7 +108,7 @@ export function TrainingCalendar() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/40 hover:bg-background/70 transition-colors"
+            className="tap-bounce flex h-10 w-10 items-center justify-center rounded-2xl border border-border/60 bg-background/40 hover:bg-background/70 transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -117,7 +117,7 @@ export function TrainingCalendar() {
           </span>
           <button
             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/40 hover:bg-background/70 transition-colors"
+            className="tap-bounce flex h-10 w-10 items-center justify-center rounded-2xl border border-border/60 bg-background/40 hover:bg-background/70 transition-colors"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -147,17 +147,17 @@ export function TrainingCalendar() {
               key={day.toISOString()}
               onClick={() => workout && setSelectedDay(isSelected ? null : workout)}
               className={`
-                relative aspect-square flex flex-col items-center justify-center rounded-lg text-sm transition-all
+                tap-bounce relative aspect-square flex flex-col items-center justify-center rounded-2xl text-sm transition-all
                 ${workout ? "cursor-pointer" : "cursor-default"}
                 ${isCurrentDay ? "ring-2 ring-primary/60" : ""}
-                ${isSelected ? "bg-primary text-primary-foreground" : workout ? "bg-red-500/20 hover:bg-red-500/30 text-foreground" : "text-foreground/60 hover:bg-background/40"}
+                ${isSelected ? "bg-primary text-primary-foreground glow-primary" : workout ? "bg-primary/15 hover:bg-primary/25 text-foreground" : "text-foreground/60 hover:bg-background/40"}
               `}
             >
               <span className={`font-medium text-xs ${isCurrentDay && !isSelected ? "text-primary" : ""}`}>
                 {format(day, "d")}
               </span>
               {workout && !isSelected && (
-                <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-0.5" />
+                <div className="calendar-dot w-1.5 h-1.5 rounded-full bg-primary mt-0.5" />
               )}
               {workout && isSelected && (
                 <Dumbbell className="h-2.5 w-2.5 mt-0.5" />
@@ -168,7 +168,7 @@ export function TrainingCalendar() {
       </div>
 
       {selectedDay && (
-        <div className="mt-4 pt-4 border-t border-border/40 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+        <div className="screen-enter mt-4 pt-4 border-t border-border/40">
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="font-semibold text-sm">{selectedDay.title}</p>
@@ -178,7 +178,7 @@ export function TrainingCalendar() {
             </div>
             <button
               onClick={() => setSelectedDay(null)}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="tap-bounce rounded-full border border-border/50 px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               ✕
             </button>

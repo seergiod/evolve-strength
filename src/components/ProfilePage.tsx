@@ -123,7 +123,7 @@ export function ProfilePage() {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl font-bold text-primary-foreground shadow-[0_0_20px_-4px_oklch(0.68_0.21_250_/_0.5)]">
+              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl font-bold text-primary-foreground shadow-sm">
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="" className="h-full w-full rounded-2xl object-cover" />
                 ) : initials}
