@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
   component: LoginPage,
   head: () => ({
     meta: [
-      { title: "IronFeed — Gimnasio Social" },
+      { title: "GynBros — Gimnasio pa mis amigos" },
       {
         name: "description",
         content:
