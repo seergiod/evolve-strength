@@ -1,88 +1,160 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Dumbbell, Flame, ArrowRight } from "lucide-react";
+
+import { useState } from "react";
+import { useNavigate, createFileRoute } from "@tanstack/react-router";
+import { Dumbbell, Mail, Lock, User, Eye, EyeOff, ArrowRight, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { setUsername, getUsername } from "@/lib/session";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 
-export const Route = createFileRoute("/")({
-  component: LoginPage,
-  head: () => ({
-    meta: [
-      { title: "GynBros — Gimnasio pa mis amigos" },
-      {
-        name: "description",
-        content:
-          "Comparte tus entrenamientos, sube en el ranking y entrena con IA.",
-      },
-    ],
-  }),
-});
-
-function LoginPage() {
-  const [name, setName] = useState("");
+export const Route = createFileRoute("/")({ component: AuthPage });`n`nfunction AuthPage() {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const u = getUsername();
-    if (u) navigate({ to: "/dashboard" });
-  }, [navigate]);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = name.trim();
-    if (trimmed.length < 2) return;
-    setUsername(trimmed);
-    navigate({ to: "/dashboard" });
+    setLoading(true);
+    try {
+      if (mode === "signin") {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast.error(error.message || "Credenciales incorrectas");
+          return;
+        }
+        navigate({ to: "/dashboard" });
+      } else {
+        if (username.length < 3) {
+          toast.error("El nombre de usuario debe tener al menos 3 caracteres");
+          return;
+        }
+        const { error } = await signUp(email, password, username);
+        if (error) {
+          toast.error(error.message || "Error al crear cuenta");
+          return;
+        }
+        toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
+        navigate({ to: "/dashboard" });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <main className="relative flex min-h-screen items-center justify-center px-4 overflow-hidden">
-      <div className="absolute inset-0 -z-10 opacity-30">
-        <div className="absolute top-1/4 left-1/4 h-72 w-72 rounded-full bg-primary blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 h-72 w-72 rounded-full bg-accent blur-[120px]" />
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/20 blur-[160px]" />
+        <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-accent/15 blur-[160px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-primary/10 blur-[120px]" />
       </div>
 
-      <div className="w-full max-w-md card-elevated rounded-2xl p-8 md:p-10">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent glow-primary">
-            <Dumbbell className="h-6 w-6 text-primary-foreground" />
+      <div className="w-full max-w-md">
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent shadow-[0_0_30px_-4px_oklch(0.68_0.21_250_/_0.6)]">
+            <Dumbbell className="h-7 w-7 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">IronFeed</h1>
-            <p className="text-xs text-muted-foreground">
-              Gimnasio social · Powered by AI
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight font-display">IronFeed</h1>
+            <p className="text-xs text-muted-foreground tracking-widest uppercase">AI Fitness Platform</p>
           </div>
         </div>
 
-        <h2 className="text-3xl md:text-4xl font-bold mb-3">
-          Levanta. <span className="text-gradient">Comparte.</span> Domina.
-        </h2>
-        <p className="text-sm text-muted-foreground mb-8">
-          Entra con tu nombre y empieza a competir con tus amigos.
-        </p>
+        <div className="card-elevated rounded-2xl p-8">
+          <div className="flex rounded-xl bg-muted/40 p-1 mb-6">
+            <button
+              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
+                mode === "signin" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setMode("signin")}
+            >
+              Iniciar sesión
+            </button>
+            <button
+              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
+                mode === "signup" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setMode("signup")}
+            >
+              Crear cuenta
+            </button>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Tu nombre de usuario"
-            className="h-12 text-base bg-input/60 border-border/60"
-            autoFocus
-          />
-          <Button
-            type="submit"
-            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 glow-primary"
-          >
-            Entrar al gimnasio
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === "signup" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nombre de usuario</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="ironbro2024"
+                    className="h-12 pl-10 bg-input/60 border-border/60"
+                    required
+                  />
+                </div>
+              </div>
+            )}
 
-        <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
-          <Flame className="h-4 w-4 text-accent" />
-          <span>Sin contraseñas. Sin emails. Solo hierro.</span>
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  className="h-12 pl-10 bg-input/60 border-border/60"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Contraseña</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type={showPass ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="h-12 pl-10 pr-10 bg-input/60 border-border/60"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 shadow-[0_0_30px_-4px_oklch(0.68_0.21_250_/_0.5)] mt-2"
+            >
+              {loading ? "Cargando..." : mode === "signin" ? "Entrar" : "Crear cuenta"}
+              {!loading && <ArrowRight className="ml-2 h-5 w-5" />}
+            </Button>
+          </form>
+
+          <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground justify-center">
+            <Flame className="h-4 w-4 text-accent" />
+            <span>Entrena. Registra. Domina.</span>
+          </div>
         </div>
       </div>
     </main>
