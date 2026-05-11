@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
+
 
 const SYSTEM_PROMPT = `Eres un entrenador personal experto. Genera rutinas de gimnasio claras, estructuradas y seguras.
 Responde SIEMPRE en espanol, en formato Markdown.
@@ -15,33 +15,11 @@ type ChatCompletionResponse = {
   }[];
 };
 
-async function requireAuth(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  if (!token) return false;
-
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey =
-    process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!supabaseUrl || !supabaseKey) return false;
-
-  const supabase = createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const { data, error } = await supabase.auth.getUser(token);
-  return !error && Boolean(data.user);
-}
-
 export const Route = createFileRoute("/api/ai-routine")({
   server: {
     handlers: {
       POST: async ({ request }: { request: Request }) => {
         try {
-          if (!(await requireAuth(request))) {
-            return new Response("Unauthorized", { status: 401 });
-          }
-
           const { goal, level, days } = (await request.json()) as {
             goal?: string;
             level?: string;
