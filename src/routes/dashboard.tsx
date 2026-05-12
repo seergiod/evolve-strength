@@ -73,39 +73,47 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full">
       <Toaster theme="dark" position="top-center" />
 
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border/40 bg-background/70 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent glow-primary">
+      {/* Header — edge to edge */}
+      <header className="sticky top-0 z-30 glass-strong border-b border-border">
+        <div className="w-full px-4 md:px-8 h-16 flex items-center justify-between">
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex items-center gap-3"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent glow-cyan">
               <Dumbbell className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-display font-bold leading-none">GYMBROS</h1>
+              <h1 className="font-display font-bold leading-none text-gradient">GYMBROS</h1>
               <p className="text-[9px] uppercase tracking-widest text-muted-foreground hidden sm:block">
                 Training Social App
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {TABS.map((t) => (
-              <button
+            {TABS.map((t, i) => (
+              <motion.button
                 key={t.id}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 * i, duration: 0.35 }}
                 onClick={() => setTab(t.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                   tab === t.id
-                    ? "bg-primary text-primary-foreground glow-primary"
+                    ? "bg-primary/15 text-primary glow-cyan border border-primary/30"
                     : "text-muted-foreground hover:text-foreground hover:bg-background/60"
                 }`}
               >
                 <t.icon className="h-4 w-4" />
                 {t.label}
-              </button>
+              </motion.button>
             ))}
           </nav>
 
@@ -133,104 +141,146 @@ function Dashboard() {
         </div>
 
         {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border/40 bg-background/80 backdrop-blur-md">
-            <nav className="flex flex-col p-2 gap-1">
-              {TABS.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => { setTab(t.id); setMobileMenuOpen(false); }}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    tab === t.id
-                      ? "bg-primary/20 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background/60"
-                  }`}
-                >
-                  <t.icon className="h-4 w-4" />
-                  {t.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        )}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden border-t border-border glass overflow-hidden"
+            >
+              <nav className="flex flex-col p-2 gap-1">
+                {TABS.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => { setTab(t.id); setMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      tab === t.id
+                        ? "bg-primary/20 text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-background/60"
+                    }`}
+                  >
+                    <t.icon className="h-4 w-4" />
+                    {t.label}
+                  </button>
+                ))}
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-        {/* Home Tab */}
-        {tab === "home" && (
-          <div className="screen-enter space-y-5">
-            <div className="stagger-in">
-              <h2 className="font-display text-2xl md:text-3xl font-bold mb-1">
-                Hola, <span className="text-gradient">{profile?.display_name || profile?.username}</span>
-              </h2>
-              <p className="text-sm text-muted-foreground">Registra tu próximo entrenamiento y sube en el ranking.</p>
-            </div>
+      {/* Main — edge to edge */}
+      <main className="w-full px-4 md:px-8 py-6 md:py-8">
+        <AnimatePresence mode="wait">
+          {tab === "home" && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4, ease: [0.2, 0.9, 0.2, 1] }}
+              className="space-y-5"
+            >
+              <MotionFade>
+                <h2 className="font-display text-2xl md:text-3xl font-bold mb-1">
+                  Hola, <span className="text-gradient">{profile?.display_name || profile?.username}</span>
+                </h2>
+                <p className="text-sm text-muted-foreground">Registra tu próximo entrenamiento y sube en el ranking.</p>
+              </MotionFade>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              <div className="lg:col-span-2 space-y-5">
-                {profile && <ExerciseForm userId={user.id} />}
-                <Feed />
-              </div>
-              <div className="space-y-5">
-                <Ranking />
-                <div className="card-elevated premium-card shimmer-line rounded-3xl p-4 text-center">
-                  <Trophy className="float-soft h-8 w-8 text-amber-400 mx-auto mb-2" />
-                  <p className="text-sm font-semibold">Leaderboard Global</p>
-                  <p className="text-xs text-muted-foreground mt-1">Compite con tu comunidad</p>
-                  <button onClick={() => setTab("profile")} className="tap-bounce mt-3 rounded-full border border-primary/25 px-3 py-2 text-xs text-primary">
-                    Ver mi perfil
-                  </button>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div className="lg:col-span-2 space-y-5">
+                  <MotionSlideUp delay={0.05}>
+                    {profile && <ExerciseForm userId={user.id} />}
+                  </MotionSlideUp>
+                  <MotionSlideUp delay={0.15}>
+                    <Feed />
+                  </MotionSlideUp>
+                </div>
+                <div className="space-y-5">
+                  <MotionSlideUp delay={0.1}>
+                    <Ranking />
+                  </MotionSlideUp>
+                  <MotionSlideUp delay={0.2}>
+                    <div className="card-elevated premium-card shimmer-line rounded-3xl p-4 text-center">
+                      <Trophy className="float-soft h-8 w-8 text-amber-400 mx-auto mb-2" />
+                      <p className="text-sm font-semibold">Leaderboard Global</p>
+                      <p className="text-xs text-muted-foreground mt-1">Compite con tu comunidad</p>
+                      <button onClick={() => setTab("profile")} className="tap-bounce mt-3 rounded-full border border-primary/30 px-3 py-2 text-xs text-primary hover:bg-primary/10">
+                        Ver mi perfil
+                      </button>
+                    </div>
+                  </MotionSlideUp>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
 
-        {/* Calendar Tab */}
-        {tab === "calendar" && (
-          <div className="screen-enter space-y-5">
-            <div>
-              <h2 className="font-display text-2xl font-bold mb-1">Calendario</h2>
-              <p className="text-sm text-muted-foreground">Tu historial de entrenamientos</p>
-            </div>
-            <div className="max-w-lg">
-              <TrainingCalendar />
-            </div>
-          </div>
-        )}
+          {tab === "calendar" && (
+            <motion.div
+              key="calendar"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-5"
+            >
+              <div>
+                <h2 className="font-display text-2xl font-bold mb-1">Calendario</h2>
+                <p className="text-sm text-muted-foreground">Tu historial de entrenamientos</p>
+              </div>
+              <div className="max-w-2xl">
+                <TrainingCalendar />
+              </div>
+            </motion.div>
+          )}
 
-        {/* Profile Tab */}
-        {tab === "profile" && (
-          <div className="screen-enter space-y-5 max-w-2xl">
-            <div>
-              <h2 className="font-display text-2xl font-bold mb-1">Mi Perfil</h2>
-              <p className="text-sm text-muted-foreground">Estadísticas y progreso personal</p>
-            </div>
-            <ProfilePage />
-          </div>
-        )}
+          {tab === "profile" && (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-5 max-w-3xl"
+            >
+              <div>
+                <h2 className="font-display text-2xl font-bold mb-1">Mi Perfil</h2>
+                <p className="text-sm text-muted-foreground">Estadísticas y progreso personal</p>
+              </div>
+              <ProfilePage />
+            </motion.div>
+          )}
 
-        {/* AI Coach Tab */}
-        {tab === "coach" && (
-          <div className="screen-enter space-y-5 max-w-2xl">
-            <div>
-              <h2 className="font-display text-2xl font-bold mb-1">Coach IA</h2>
-              <p className="text-sm text-muted-foreground">Tu entrenador personal inteligente</p>
-            </div>
-            <AICoach />
-          </div>
-        )}
+          {tab === "coach" && (
+            <motion.div
+              key="coach"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-5 max-w-3xl"
+            >
+              <div>
+                <h2 className="font-display text-2xl font-bold mb-1">Coach IA</h2>
+                <p className="text-sm text-muted-foreground">Tu entrenador personal inteligente</p>
+              </div>
+              <AICoach />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
-      {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-border/40 bg-background/85 backdrop-blur-xl md:hidden">
+      {/* Mobile Bottom Nav — glass */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 glass-strong border-t border-border md:hidden">
         <div className="flex px-2 pb-2 pt-1">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`tap-bounce flex-1 flex flex-col items-center rounded-2xl py-3 gap-1 text-[10px] transition-all ${
-                tab === t.id ? "nav-pop bg-primary/15 text-primary glow-primary" : "text-muted-foreground"
+                tab === t.id ? "nav-pop bg-primary/15 text-primary glow-cyan" : "text-muted-foreground"
               }`}
             >
               <t.icon className="h-5 w-5" />
