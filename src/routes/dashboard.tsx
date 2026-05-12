@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Dumbbell,
   LogOut,
@@ -20,6 +21,7 @@ import { TrainingCalendar } from "@/components/TrainingCalendar";
 import { ProfilePage } from "@/components/ProfilePage";
 import { AICoach } from "@/components/AICoach";
 import { useAuth } from "@/lib/auth";
+import { MotionFade, MotionSlideUp } from "@/components/MotionFade";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
