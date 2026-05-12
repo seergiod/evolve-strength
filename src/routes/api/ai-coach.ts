@@ -85,7 +85,9 @@ export const Route = createFileRoute("/api/ai-coach")({
           const reply =
             data.choices?.[0]?.message?.content ||
             "Lo siento, no pude generar una respuesta.";
-          return Response.json({ reply });
+          return new Response(JSON.stringify({ reply }), {
+            headers: { "Content-Type": "application/json" },
+          });
         } catch (e) {
           return new Response(
             `Error: ${e instanceof Error ? e.message : "unknown"}`,

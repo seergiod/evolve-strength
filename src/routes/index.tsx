@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Dumbbell, Mail, Lock, User, Eye, EyeOff, ArrowRight, Flame, Check, X } from "lucide-react";
@@ -26,7 +26,7 @@ function AuthPage() {
   const [username, setUsername] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { user, loading: authLoading, signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
   const pwCheck = useMemo(() => checkPassword(password), [password]);
@@ -37,6 +37,12 @@ function AuthPage() {
     mode === "signin"
       ? emailOk && password.length >= 1
       : emailOk && pwCheck.valid && usernameOk;
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate({ to: "/dashboard" });
+    }
+  }, [authLoading, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +64,7 @@ function AuthPage() {
         toast.success("¡Bienvenido de vuelta!");
         navigate({ to: "/dashboard" });
       } else {
-        const { error } = await signUp(email, password, username);
+        const { error, session } = await signUp(email, password, username);
         if (error) {
           const msg = /already registered/i.test(error.message)
             ? "Ese email ya está registrado"
@@ -66,9 +72,14 @@ function AuthPage() {
           toast.error(msg);
           return;
         }
-        toast.success("¡Cuenta creada! Revisa tu email para confirmar.", {
-          description: "Te hemos enviado un enlace de confirmación.",
-        });
+        if (session) {
+          toast.success("¡Cuenta creada! Redirigiendo a tu dashboard.");
+          navigate({ to: "/dashboard" });
+        } else {
+          toast.success("¡Cuenta creada! Revisa tu email para confirmar.", {
+            description: "Te hemos enviado un enlace de confirmación.",
+          });
+        }
       }
     } finally {
       setLoading(false);

@@ -20,7 +20,10 @@ type AuthContextType = {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, username: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, username: string) => Promise<{
+    error: Error | null;
+    session: Session | null;
+  }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>;
@@ -89,9 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, username: string) => {
+    const productionUrl = process.env.VITE_PRODUCTION_URL || process.env.VITE_APP_URL;
     const redirectTo =
-      typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined;
-    const { error } = await supabase.auth.signUp({
+      typeof window !== "undefined"
+        ? `${productionUrl ?? window.location.origin}/dashboard`
+        : productionUrl
+        ? `${productionUrl}/dashboard`
+        : undefined;
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -99,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emailRedirectTo: redirectTo,
       },
     });
-    return { error: error as Error | null };
+    return { error: error as Error | null, session: data.session ?? null };
   };
 
   const signIn = async (email: string, password: string) => {

@@ -72,9 +72,12 @@ Incluye calentamiento, ejercicios principales con series x reps, descansos y con
           }
 
           const data = (await res.json()) as ChatCompletionResponse;
-          return Response.json({
-            routine: data.choices?.[0]?.message?.content ?? "",
-          });
+          return new Response(
+            JSON.stringify({
+              routine: data.choices?.[0]?.message?.content ?? "",
+            }),
+            { headers: { "Content-Type": "application/json" } },
+          );
         } catch (e) {
           return new Response(
             `Error: ${e instanceof Error ? e.message : "unknown"}`,

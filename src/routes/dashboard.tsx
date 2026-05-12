@@ -11,6 +11,7 @@ import {
   Trophy,
   Menu,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
@@ -20,6 +21,8 @@ import { ExerciseForm } from "@/components/ExerciseForm";
 import { TrainingCalendar } from "@/components/TrainingCalendar";
 import { ProfilePage } from "@/components/ProfilePage";
 import { AICoach } from "@/components/AICoach";
+import { RoutineManager } from "@/components/RoutineManager";
+import { SocialPanel } from "@/components/SocialPanel";
 import { useAuth } from "@/lib/auth";
 import { MotionFade, MotionSlideUp } from "@/components/MotionFade";
 
@@ -33,13 +36,14 @@ export const Route = createFileRoute("/dashboard")({
   }),
 });
 
-type Tab = "home" | "calendar" | "profile" | "coach";
+type Tab = "home" | "calendar" | "profile" | "coach" | "social";
 
 const TABS: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "home", label: "Inicio", icon: LayoutDashboard },
   { id: "calendar", label: "Calendario", icon: Calendar },
   { id: "profile", label: "Perfil", icon: UserIcon },
   { id: "coach", label: "Coach IA", icon: Sparkles },
+  { id: "social", label: "Social", icon: MessageSquare },
 ];
 
 function Dashboard() {
@@ -197,6 +201,9 @@ function Dashboard() {
                   <MotionSlideUp delay={0.15}>
                     <Feed />
                   </MotionSlideUp>
+                  <MotionSlideUp delay={0.25}>
+                    <RoutineManager />
+                  </MotionSlideUp>
                 </div>
                 <div className="space-y-5">
                   <MotionSlideUp delay={0.1}>
@@ -267,6 +274,23 @@ function Dashboard() {
                 <p className="text-sm text-muted-foreground">Tu entrenador personal inteligente</p>
               </div>
               <AICoach />
+            </motion.div>
+          )}
+
+          {tab === "social" && (
+            <motion.div
+              key="social"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-5 max-w-4xl"
+            >
+              <div>
+                <h2 className="font-display text-2xl font-bold mb-1">Social</h2>
+                <p className="text-sm text-muted-foreground">Amigos, chat y rutina compartida</p>
+              </div>
+              <SocialPanel />
             </motion.div>
           )}
         </AnimatePresence>

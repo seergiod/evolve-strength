@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+﻿import { useEffect, useState } from "react";
 import { Trophy, Flame, Dumbbell, TrendingUp, Edit2, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +14,8 @@ import {
   CartesianGrid,
 } from "recharts";
 import { format, subDays } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 type Stats = {
   totalWorkouts: number;
@@ -28,20 +28,57 @@ type Stats = {
 };
 
 type ProgressPoint = { date: string; volume: number };
+type RoutinePreview = { id: string; name: string; schedule: unknown; created_at: string };
+type CalendarEventPreview = {
+  id: string;
+  title: string;
+  event_date: string;
+  event_time: string | null;
+  repeat_weekly: boolean;
+  repeat_days: string[] | null;
+};
+type ProfileData = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  body_weight: number | null;
+  height: number | null;
+  age: number | null;
+};
 
 export function ProfilePage() {
   const { user, profile, updateProfile } = useAuth();
+  const [publicProfile, setPublicProfile] = useState<ProfileData | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [progress, setProgress] = useState<ProgressPoint[]>([]);
+  const [publicRoutines, setPublicRoutines] = useState<RoutinePreview[]>([]);
+  const [publicEvents, setPublicEvents] = useState<CalendarEventPreview[]>([]);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({ bio: "", body_weight: "", height: "", age: "" });
+  const [viewUserId, setViewUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
+    if (typeof window === "undefined") return;
+    const search = new URLSearchParams(window.location.search);
+    setViewUserId(search.get("userId"));
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    if (viewUserId && viewUserId !== user.id) {
+      fetchPublicProfile(viewUserId);
+      fetchPublicRoutines(viewUserId);
+      fetchPublicEvents(viewUserId);
+    } else {
+      setPublicProfile(null);
+      setPublicRoutines([]);
+      setPublicEvents([]);
       fetchStats();
       fetchProgress();
     }
-  }, [user]);
+  }, [user, viewUserId]);
 
   useEffect(() => {
     if (profile) {
@@ -54,9 +91,11 @@ export function ProfilePage() {
     }
   }, [profile]);
 
+  const isPublicView = Boolean(viewUserId && viewUserId !== user?.id);
+  const displayedProfile = isPublicView ? publicProfile : profile;
+
   const fetchStats = async () => {
     if (!user) return;
-
     const [workoutsRes, setsRes, prsRes] = await Promise.all([
       supabase.from("workouts").select("total_volume").eq("user_id", user.id),
       supabase.from("workout_sets").select("id").eq("user_id", user.id),
@@ -75,7 +114,7 @@ export function ProfilePage() {
       totalWorkouts: workouts.length,
       totalVolume: workouts.reduce((sum, w) => sum + (w.total_volume || 0), 0),
       totalSets: sets.length,
-      streak: 0, // computed elsewhere
+      streak: 0,
       benchPR: Number(benchPR),
       squatPR: Number(squatPR),
       deadliftPR: Number(deadliftPR),
@@ -103,6 +142,40 @@ export function ProfilePage() {
     }
   };
 
+  const fetchPublicProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("profiles_public")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (error || !data) {
+      toast.error("No se encontró el perfil público");
+      return;
+    }
+    setPublicProfile(data as ProfileData);
+  };
+
+  const fetchPublicRoutines = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("routines")
+      .select("id, name, schedule, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) setPublicRoutines(data as RoutinePreview[]);
+  };
+
+  const fetchPublicEvents = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("calendar_events")
+      .select("id, title, event_date, event_time, repeat_weekly, repeat_days")
+      .eq("user_id", userId)
+      .order("event_date", { ascending: true });
+
+    if (!error && data) setPublicEvents(data as CalendarEventPreview[]);
+  };
+
   const handleSave = async () => {
     const { error } = await updateProfile({
       bio: formData.bio,
@@ -111,61 +184,91 @@ export function ProfilePage() {
       age: formData.age ? parseInt(formData.age) : null,
     });
     if (error) toast.error("Error al guardar perfil");
-    else { toast.success("Perfil actualizado"); setEditing(false); }
+    else {
+      toast.success("Perfil actualizado");
+      setEditing(false);
+    }
   };
 
-  const initials = profile?.username?.slice(0, 2).toUpperCase() || "??";
+  const initials = displayedProfile?.username?.slice(0, 2).toUpperCase() || "??";
+  const ownerClass = isPublicView ? "text-muted-foreground" : "text-foreground";
 
   return (
     <div className="space-y-5">
-      {/* Profile Header */}
       <div className="card-elevated rounded-2xl p-6">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl font-bold text-primary-foreground shadow-sm">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="" className="h-full w-full rounded-2xl object-cover" />
-                ) : initials}
+                {displayedProfile?.avatar_url ? (
+                  <img src={displayedProfile.avatar_url} alt="" className="h-full w-full rounded-2xl object-cover" />
+                ) : (
+                  initials
+                )}
               </div>
-              <button className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-accent flex items-center justify-center shadow-sm">
-                <Camera className="h-3 w-3 text-accent-foreground" />
-              </button>
+              {!isPublicView && (
+                <button className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-accent flex items-center justify-center shadow-sm">
+                  <Camera className="h-3 w-3 text-accent-foreground" />
+                </button>
+              )}
             </div>
             <div>
-              <h2 className="text-xl font-bold font-display">{profile?.display_name || profile?.username}</h2>
-              <p className="text-sm text-accent">@{profile?.username}</p>
-              {profile?.bio && <p className="text-sm text-muted-foreground mt-1">{profile.bio}</p>}
+              <h2 className="text-xl font-bold font-display">{displayedProfile?.display_name || displayedProfile?.username}</h2>
+              <p className={`text-sm ${ownerClass}`}>@{displayedProfile?.username}</p>
+              {displayedProfile?.bio && <p className={`text-sm mt-1 ${ownerClass}`}>{displayedProfile.bio}</p>}
+              {isPublicView && <p className="mt-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">Perfil público</p>}
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setEditing(!editing)} className="gap-2">
-            <Edit2 className="h-3 w-3" />
-            {editing ? "Cancelar" : "Editar"}
-          </Button>
+
+          {!isPublicView && (
+            <Button variant="outline" size="sm" onClick={() => setEditing(!editing)} className="gap-2">
+              <Edit2 className="h-3 w-3" />
+              {editing ? "Cancelar" : "Editar"}
+            </Button>
+          )}
         </div>
 
-        {editing && (
+        {!isPublicView && editing && (
           <div className="mt-4 pt-4 border-t border-border/40 grid grid-cols-2 gap-3 animate-in fade-in-0 duration-200">
             <div className="col-span-2 space-y-1">
               <Label className="text-xs text-muted-foreground uppercase tracking-wide">Bio</Label>
-              <Input value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} placeholder="Tu historia..." className="bg-input/60" />
+              <Input
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                placeholder="Tu historia..."
+                className="bg-input/60"
+              />
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground uppercase tracking-wide">Peso corporal (kg)</Label>
-              <Input type="number" value={formData.body_weight} onChange={(e) => setFormData({ ...formData, body_weight: e.target.value })} placeholder="80" className="bg-input/60" />
+              <Input
+                type="number"
+                value={formData.body_weight}
+                onChange={(e) => setFormData({ ...formData, body_weight: e.target.value })}
+                placeholder="80"
+                className="bg-input/60"
+              />
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground uppercase tracking-wide">Altura (cm)</Label>
-              <Input type="number" value={formData.height} onChange={(e) => setFormData({ ...formData, height: e.target.value })} placeholder="175" className="bg-input/60" />
+              <Input
+                type="number"
+                value={formData.height}
+                onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                placeholder="175"
+                className="bg-input/60"
+              />
             </div>
             <div className="col-span-2">
-              <Button onClick={handleSave} className="w-full bg-gradient-to-r from-primary to-accent">Guardar cambios</Button>
+              <Button onClick={handleSave} className="w-full bg-gradient-to-r from-primary to-accent">
+                Guardar cambios
+              </Button>
             </div>
           </div>
         )}
 
-        {(profile?.body_weight || profile?.height || profile?.age) && !editing && (
-          <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
+        {!isPublicView && (profile?.body_weight || profile?.height || profile?.age) && !editing && (
+          <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
             {profile.body_weight && <span>⚖️ {profile.body_weight} kg</span>}
             {profile.height && <span>📏 {profile.height} cm</span>}
             {profile.age && <span>🎂 {profile.age} años</span>}
@@ -173,8 +276,7 @@ export function ProfilePage() {
         )}
       </div>
 
-      {/* Stats Grid */}
-      {stats && (
+      {!isPublicView && stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: "Entrenos", value: stats.totalWorkouts, icon: Dumbbell, color: "text-primary" },
@@ -191,8 +293,7 @@ export function ProfilePage() {
         </div>
       )}
 
-      {/* PRs */}
-      {stats && (
+      {!isPublicView && stats && (
         <div className="card-elevated rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <Trophy className="h-5 w-5 text-amber-400" />
@@ -206,9 +307,7 @@ export function ProfilePage() {
             ].map((pr) => (
               <div key={pr.name} className="rounded-xl bg-background/50 border border-border/40 p-3 text-center">
                 <span className="text-2xl">{pr.emoji}</span>
-                <p className="text-lg font-bold text-amber-400 mt-1">
-                  {pr.value > 0 ? `${pr.value}kg` : "-"}
-                </p>
+                <p className="text-lg font-bold text-amber-400 mt-1">{pr.value > 0 ? `${pr.value}kg` : "-"}</p>
                 <p className="text-xs text-muted-foreground">{pr.name}</p>
               </div>
             ))}
@@ -216,8 +315,7 @@ export function ProfilePage() {
         </div>
       )}
 
-      {/* Progress Chart */}
-      {progress.length > 0 && (
+      {!isPublicView && progress.length > 0 && (
         <div className="card-elevated rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="h-5 w-5 text-accent" />
@@ -236,15 +334,53 @@ export function ProfilePage() {
                   fontSize: "12px",
                 }}
               />
-              <Line
-                type="monotone"
-                dataKey="volume"
-                stroke="oklch(0.85 0.2 175)"
-                strokeWidth={2}
-                dot={{ fill: "oklch(0.85 0.2 175)", r: 3 }}
-              />
+              <Line type="monotone" dataKey="volume" stroke="oklch(0.85 0.2 175)" strokeWidth={2} dot={{ fill: "oklch(0.85 0.2 175)", r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+      )}
+
+      {isPublicView && publicRoutines.length > 0 && (
+        <div className="card-elevated rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-bold">Rutinas públicas</h3>
+            <span className="text-xs text-muted-foreground">{publicRoutines.length} rutinas</span>
+          </div>
+          <div className="space-y-3">
+            {publicRoutines.map((routine) => (
+              <div key={routine.id} className="rounded-3xl border border-border/40 bg-background/60 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{routine.name}</p>
+                    <p className="text-xs text-muted-foreground">Creada el {format(new Date(routine.created_at), "dd/MM/yyyy")}</p>
+                  </div>
+                  <span className="text-[11px] uppercase tracking-[0.3em] text-primary">Publica</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isPublicView && publicEvents.length > 0 && (
+        <div className="card-elevated rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-bold">Eventos publicados</h3>
+            <span className="text-xs text-muted-foreground">{publicEvents.length} eventos</span>
+          </div>
+          <div className="grid gap-3">
+            {publicEvents.map((event) => (
+              <div key={event.id} className="rounded-3xl border border-border/40 bg-background/60 p-4">
+                <p className="font-semibold">{event.title}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {format(new Date(event.event_date), "dd/MM/yyyy")} {event.event_time ? `· ${event.event_time}` : ""}
+                </p>
+                {event.repeat_weekly && (
+                  <p className="text-[11px] uppercase tracking-[0.25em] text-accent mt-2">Repite semanalmente</p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
