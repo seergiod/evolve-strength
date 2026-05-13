@@ -53,6 +53,63 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          created_at: string
+          event_date: string
+          event_time: string | null
+          id: string
+          repeat_days: number[] | null
+          repeat_weekly: boolean
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_date: string
+          event_time?: string | null
+          id?: string
+          repeat_days?: number[] | null
+          repeat_weekly?: boolean
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_date?: string
+          event_time?: string | null
+          id?: string
+          repeat_days?: number[] | null
+          repeat_weekly?: boolean
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           created_at: string
@@ -129,6 +186,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      friendships: {
+        Row: {
+          created_at: string
+          id: string
+          receiver_id: string
+          requester_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          receiver_id: string
+          requester_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          receiver_id?: string
+          requester_id?: string
+          status?: string
+        }
+        Relationships: []
       }
       personal_records: {
         Row: {
@@ -221,6 +302,30 @@ export type Database = {
           id?: string
           updated_at?: string
           username?: string
+        }
+        Relationships: []
+      }
+      routines: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          schedule: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          schedule?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          schedule?: Json
+          user_id?: string
         }
         Relationships: []
       }
@@ -345,229 +450,42 @@ export type Database = {
           },
         ]
       }
-      routines: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          schedule: Json
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          schedule: Json
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          schedule?: Json
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "routines_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "routines_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      calendar_events: {
-        Row: {
-          created_at: string
-          event_date: string
-          event_time: string | null
-          id: string
-          repeat_days: string[] | null
-          repeat_weekly: boolean
-          title: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          event_date: string
-          event_time?: string | null
-          id?: string
-          repeat_days?: string[] | null
-          repeat_weekly?: boolean
-          title: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          event_date?: string
-          event_time?: string | null
-          id?: string
-          repeat_days?: string[] | null
-          repeat_weekly?: boolean
-          title?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "calendar_events_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "calendar_events_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      friendships: {
-        Row: {
-          created_at: string
-          id: string
-          receiver_id: string
-          requester_id: string
-          status: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          receiver_id: string
-          requester_id: string
-          status: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          receiver_id?: string
-          requester_id?: string
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "friendships_receiver_id_fkey"
-            columns: ["receiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "friendships_receiver_id_fkey"
-            columns: ["receiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "friendships_requester_id_fkey"
-            columns: ["requester_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "friendships_requester_id_fkey"
-            columns: ["requester_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chat_messages: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          receiver_id: string
-          sender_id: string
-          user_id: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          receiver_id: string
-          sender_id: string
-          user_id?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          receiver_id?: string
-          sender_id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_messages_receiver_id_fkey"
-            columns: ["receiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_messages_receiver_id_fkey"
-            columns: ["receiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       profiles_public: {
         Row: {
+          age: number | null
           avatar_url: string | null
           bio: string | null
+          body_weight: number | null
           created_at: string | null
           display_name: string | null
           goal: string | null
+          height: number | null
           id: string | null
           username: string | null
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
           bio?: string | null
+          body_weight?: number | null
           created_at?: string | null
           display_name?: string | null
           goal?: string | null
+          height?: number | null
           id?: string | null
           username?: string | null
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
           bio?: string | null
+          body_weight?: number | null
           created_at?: string | null
           display_name?: string | null
           goal?: string | null
+          height?: number | null
           id?: string | null
           username?: string | null
         }
@@ -575,7 +493,7 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      are_friends: { Args: { a: string; b: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

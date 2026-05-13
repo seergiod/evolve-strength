@@ -117,7 +117,7 @@ export function TrainingCalendar() {
       event_date: format(selectedDay, "yyyy-MM-dd"),
       event_time: eventTime,
       repeat_weekly: repeatWeekly,
-      repeat_days: repeatWeekly ? repeatDays : null,
+      repeat_days: repeatWeekly ? repeatDays.map((d) => Number(d)) : null,
     });
 
     if (error) {

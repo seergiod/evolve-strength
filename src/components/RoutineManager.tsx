@@ -218,7 +218,7 @@ export function RoutineManager() {
                         <p className="font-semibold text-sm">{routine.name}</p>
                         <p className="text-xs text-muted-foreground">{new Date(routine.created_at).toLocaleDateString()}</p>
                       </div>
-                      <span className="text-xs text-primary">{Object.keys(routine.schedule as Record<string, unknown>).filter((day) => (routine.schedule as Record<string, unknown>)[day].length > 0).length} días</span>
+                      <span className="text-xs text-primary">{Object.keys(routine.schedule as Record<string, unknown[]>).filter((day) => ((routine.schedule as Record<string, unknown[]>)[day]?.length ?? 0) > 0).length} días</span>
                     </div>
                     <div className="mt-3 grid gap-2 text-xs text-muted-foreground">
                       {WEEK_DAYS.filter((day) => (routine.schedule as Record<string, { exercise: string }[]>)[day]?.length > 0).map((day) => (
