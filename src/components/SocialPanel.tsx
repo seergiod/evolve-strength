@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { MessageSquare, UserPlus, Check, Send, Users, Plus } from "lucide-react";
+import { MessageSquare, UserPlus, Check, Send, Users, Plus, Search, Loader2 } from "lucide-react";
 
 type ProfilePreview = {
   id: string;
@@ -37,7 +36,9 @@ export function SocialPanel() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [searchUsername, setSearchUsername] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<ProfilePreview[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [sendingTo, setSendingTo] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -66,6 +67,29 @@ export function SocialPanel() {
     };
   }, [user, selectedFriend]);
 
+  // Live search (debounced)
+  useEffect(() => {
+    if (!user) return;
+    const term = searchUsername.trim();
+    if (term.length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    const handle = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id,username,display_name")
+        .or(`username.ilike.%${term}%,display_name.ilike.%${term}%`)
+        .neq("id", user.id)
+        .limit(10);
+      if (!error) setSearchResults(data || []);
+      setSearching(false);
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [searchUsername, user]);
+
   const loadSocial = async () => {
     if (!user) return;
     const { data: friendshipData, error } = await supabase
@@ -86,12 +110,13 @@ export function SocialPanel() {
     const friendIds = accepted.map((rel) =>
       rel.requester_id === user.id ? rel.receiver_id : rel.requester_id,
     );
+    const requesterIds = pending.map((rel) => rel.requester_id);
+    const allIds = [...new Set([...friendIds, ...requesterIds])];
 
-    const uniqueFriendIds = [...new Set(friendIds)];
     const { data: profileData } = await supabase
       .from("profiles")
       .select("id,username,display_name")
-      .in("id", uniqueFriendIds.length ? uniqueFriendIds : [user.id]);
+      .in("id", allIds.length ? allIds : [user.id]);
 
     const profileMap = new Map(profileData?.map((profile) => [profile.id, profile]));
 
@@ -141,44 +166,31 @@ export function SocialPanel() {
 
     setMessages(
       (data || []).filter(
-        (item) =>
-          item.sender_id === peerId || item.receiver_id === peerId,
+        (item) => item.sender_id === peerId || item.receiver_id === peerId,
       ),
     );
   };
 
-  const addFriend = async () => {
-    if (!user || !searchUsername.trim()) return;
-    setLoading(true);
-    const { data: userData, error: userError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("username", searchUsername.trim())
-      .single();
-
-    if (userError || !userData) {
-      toast.error("No se encontró ese usuario");
-      setLoading(false);
-      return;
-    }
-    if (userData.id === user.id) {
+  const sendFriendRequest = async (targetId: string) => {
+    if (!user) return;
+    if (targetId === user.id) {
       toast.error("No puedes enviarte solicitud a ti mismo");
-      setLoading(false);
       return;
     }
-
+    setSendingTo(targetId);
     const { error } = await supabase.from("friendships").insert({
       requester_id: user.id,
-      receiver_id: userData.id,
+      receiver_id: targetId,
       status: "pending",
     });
-    setLoading(false);
+    setSendingTo(null);
     if (error) {
       toast.error("Ya existe una solicitud o no se pudo enviar");
       return;
     }
     toast.success("Solicitud de amistad enviada");
     setSearchUsername("");
+    setSearchResults([]);
     loadSocial();
   };
 
@@ -207,11 +219,6 @@ export function SocialPanel() {
     await loadMessages(selectedFriend.peer_id);
   };
 
-  const selectedFriendProfile = useMemo(
-    () => friends.find((friend) => friend.peer_id === selectedFriend?.peer_id) || null,
-    [friends, selectedFriend],
-  );
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -235,19 +242,61 @@ export function SocialPanel() {
         <div className="space-y-5">
           <div className="rounded-3xl border border-border/50 bg-background/60 p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold">Enviar solicitud</p>
+              <p className="text-sm font-semibold">Buscar usuarios</p>
               <UserPlus className="h-4 w-4 text-accent" />
             </div>
             <div className="space-y-3">
-              <Input
-                value={searchUsername}
-                onChange={(e) => setSearchUsername(e.target.value)}
-                placeholder="Buscar usuario por username"
-                className="bg-input/60"
-              />
-              <Button onClick={addFriend} disabled={loading} className="w-full bg-gradient-to-r from-primary to-accent gap-2">
-                <Plus className="h-4 w-4" /> Enviar solicitud
-              </Button>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchUsername}
+                  onChange={(e) => setSearchUsername(e.target.value)}
+                  placeholder="Escribe un nombre o username..."
+                  className="bg-input/60 pl-9"
+                />
+                {searching && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+
+              {searchUsername.trim().length >= 2 && (
+                <div className="rounded-2xl border border-border/40 bg-background/70 max-h-64 overflow-y-auto divide-y divide-border/30">
+                  {searchResults.length === 0 && !searching ? (
+                    <p className="text-xs text-muted-foreground p-3">Sin resultados.</p>
+                  ) : (
+                    searchResults.map((p) => {
+                      const alreadyFriend = friends.some((f) => f.peer_id === p.id);
+                      return (
+                        <div key={p.id} className="flex items-center justify-between gap-3 p-3">
+                          <div className="min-w-0">
+                            <p className="font-semibold truncate">{p.display_name || p.username}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">@{p.username}</p>
+                          </div>
+                          {alreadyFriend ? (
+                            <span className="text-xs text-accent flex items-center gap-1">
+                              <Check className="h-3.5 w-3.5" /> Amigos
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => sendFriendRequest(p.id)}
+                              disabled={sendingTo === p.id}
+                              className="gap-1 bg-gradient-to-r from-primary to-accent"
+                            >
+                              {sendingTo === p.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Plus className="h-3.5 w-3.5" />
+                              )}
+                              Añadir
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
