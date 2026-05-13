@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import "@tanstack/react-start";
 
-
 const SYSTEM_PROMPT = `Eres un coach de fitness personal experto y motivador. Tu nombre es IronCoach.
 
 Conoces sobre:
@@ -20,46 +19,34 @@ REGLAS:
 6. Si no tienes suficiente contexto, pregunta brevemente`;
 
 type ChatCompletionResponse = {
-  choices?: {
-    message?: {
-      content?: string;
-    };
-  }[];
+  choices?: { message?: { content?: string } }[];
 };
-
-
 
 export const Route = createFileRoute("/api/ai-coach")({
   server: {
     handlers: {
       POST: async ({ request }: { request: Request }) => {
         try {
-          
           const { messages, userContext } = (await request.json()) as {
             messages: { role: string; content: string }[];
             userContext?: { username?: string; goal?: string };
           };
 
-          const apiKey = process.env.OPENROUTER_API_KEY;
-          if (!apiKey) return new Response("AI not configured", { status: 500 });
+          const apiKey = process.env.LOVABLE_API_KEY;
+          if (!apiKey) return new Response("AI no configurada (falta LOVABLE_API_KEY)", { status: 500 });
 
-          const model = process.env.OPENROUTER_MODEL || "openrouter/free";
           const systemWithContext = userContext?.username
-            ? `${SYSTEM_PROMPT}\n\nContexto del usuario:\n- Nombre: ${userContext.username}\n- Objetivo: ${
-                userContext.goal || "fitness general"
-              }`
+            ? `${SYSTEM_PROMPT}\n\nContexto del usuario:\n- Nombre: ${userContext.username}\n- Objetivo: ${userContext.goal || "fitness general"}`
             : SYSTEM_PROMPT;
 
-          const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${apiKey}`,
-              "HTTP-Referer": "http://localhost:5173",
-              "X-Title": "GYMBROS",
             },
             body: JSON.stringify({
-              model,
+              model: "google/gemini-2.5-flash",
               messages: [
                 { role: "system", content: systemWithContext },
                 ...messages.map((m) => ({ role: m.role, content: m.content })),
@@ -70,29 +57,18 @@ export const Route = createFileRoute("/api/ai-coach")({
 
           if (!res.ok) {
             const txt = await res.text();
-            if (res.status === 429) {
-              return new Response("Demasiadas peticiones. Espera un momento.", {
-                status: 429,
-              });
-            }
-            if (res.status === 402) {
-              return new Response("Creditos de IA agotados o modelo gratuito no disponible.", { status: 402 });
-            }
+            if (res.status === 429) return new Response("Demasiadas peticiones. Espera un momento.", { status: 429 });
+            if (res.status === 402) return new Response("Creditos de IA agotados. Anade creditos en Settings > Workspace > Usage.", { status: 402 });
             return new Response(`AI error: ${txt}`, { status: 500 });
           }
 
           const data = (await res.json()) as ChatCompletionResponse;
-          const reply =
-            data.choices?.[0]?.message?.content ||
-            "Lo siento, no pude generar una respuesta.";
+          const reply = data.choices?.[0]?.message?.content || "Lo siento, no pude generar una respuesta.";
           return new Response(JSON.stringify({ reply }), {
             headers: { "Content-Type": "application/json" },
           });
         } catch (e) {
-          return new Response(
-            `Error: ${e instanceof Error ? e.message : "unknown"}`,
-            { status: 500 },
-          );
+          return new Response(`Error: ${e instanceof Error ? e.message : "unknown"}`, { status: 500 });
         }
       },
     },
